@@ -32,6 +32,15 @@ class HandTrackingDynamic:
         self.lmsList = []
         if self.results.multi_hand_landmarks:
             myHand = self.results.multi_hand_landmarks[handNo]
+
+            for hand in self.results.multi_handedness:
+                print(hand.classification[0].label)
+                if hand.classification[0].label == "Left":
+                    pass
+                    #TODO handle detection of only Left hand
+
+
+
             for id, lm in enumerate(myHand.landmark):
 
                 h, w, c = frame.shape
@@ -136,6 +145,21 @@ class HandTrackingDynamic:
 
         return angles
 
+    def calculateWristAngle(self):
+        """
+        Calculate the wrist angle using landmarks 0, 5, and 17.
+        """
+        if len(self.lmsList) > 17:  # Ensure there are enough landmarks detected
+            # Coordinates for wrist and bases of index and pinky fingers
+            wrist = self.lmsList[0][1:]
+            base_index = self.lmsList[5][1:]
+            base_pinky = self.lmsList[17][1:]
+
+            # Calculate the angle between vectors wrist-base_index and wrist-base_pinky
+            angle_wrist = self.calculateAngle(base_index, wrist, base_pinky)
+            return angle_wrist
+        else:
+            return None  # Return None if there are not enough points
 
 def main():
     ctime = 0
@@ -161,6 +185,13 @@ def main():
                 else:
                     print(f"Finger {i+1} angle: {angle:.2f} degrees")
 
+            # Calculate and display wrist angle
+            wrist_angle = detector.calculateWristAngle()
+            if wrist_angle is not None:
+                print(f"Wrist angle: {wrist_angle:.2f} degrees")
+            else:
+                print("Not enough points to calculate wrist angle")
+
         ctime = time.time()
         fps = 1 / (ctime - ptime)
         ptime = ctime
@@ -168,6 +199,7 @@ def main():
         cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
         cv2.imshow('frame', frame)
         cv2.waitKey(1)
+
 
 
 
