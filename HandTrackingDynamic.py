@@ -3,6 +3,8 @@ import mediapipe as mp
 import time
 import math as math
 
+import serial
+
 
 class HandTrackingDynamic:
     def __init__(self, mode=False, maxHands=2, detectionCon=0.5, trackCon=0.5):
@@ -166,6 +168,7 @@ def main():
     ptime = 0
     cap = cv2.VideoCapture(0)
     detector = HandTrackingDynamic()
+    arduino = serial.Serial('COM5', 9600, timeout=1)  # Replace 'COM3' with your port
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     if not cap.isOpened():
@@ -183,8 +186,41 @@ def main():
                 if angle is None:
                     print(f"Finger {i+1}: Not enough points detected")
                 else:
-                    print(f"Finger {i+1} angle: {angle:.2f} degrees")
+                    angle = 180 - angle
+                    if angle is None:
+                        print(f"Finger {i + 1}: Not enough points detected")
+                    else:
+                        if i == 0:
+                            data = f"{int(angle)}\n"
+                            print(data)
+                            arduino.write(data.encode())
+                            arduino.flush()
+                            print(f"Finger {i + 1} angle: {angle:.2f} degrees")
+                        else:
+                            data = f"{int(angle) + i * 180}\n"
+                            print(data)
+                            arduino.write('63\n'.encode())
+                            arduino.flush()
+                            time.sleep(1)
+                            """
+                            arduino.write('353\n'.encode())
+                            arduino.flush()
+                            time.sleep(1)
+                            arduino.write('529\n'.encode())
+                            arduino.flush()
+                            time.sleep(1)
+                            arduino.write('703\n'.encode())
+                            arduino.flush()
+                            time.sleep(1)
+                            arduino.write('867\n'.encode())
+                            #arduino.write(data.encode())
+                            arduino.flush()
+                            """
+                            print(f"Finger {i + 1} angle: {angle:.2f} degrees")
+                    #print(f"Finger {i+1} angle: {angle:.2f} degrees")
+                time.sleep(1)
 
+            arduino.close()
             # Calculate and display wrist angle
             wrist_angle = detector.calculateWristAngle()
             if wrist_angle is not None:
@@ -199,6 +235,7 @@ def main():
         cv2.putText(frame, str(int(fps)), (10, 70), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 255), 3)
         cv2.imshow('frame', frame)
         cv2.waitKey(1)
+        time.sleep(5)
 
 
 
