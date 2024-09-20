@@ -1,8 +1,10 @@
 import serial
 import time
 
+from config import COM_PORT
+
 # Set the correct port and baud rate
-arduino = serial.Serial('COM5', 9600, timeout=1)  # Replace 'COM3' with your port
+arduino = serial.Serial(COM_PORT, 9600, timeout=1)  # Replace 'COM3' with your port
 
 time.sleep(2)  # Give some time to establish the connection
 
